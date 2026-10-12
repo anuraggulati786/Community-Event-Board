@@ -52,7 +52,10 @@ export const createEventSchema = z.object({
   price: priceSchema,
   description: descriptionSchema,
   imageUrl: imageUrlSchema,
-  isActive: z.boolean().optional().default(true),
+  // Deliberately NOT `.default(true)`: a default here would be re-applied by
+  // updateEventSchema.partial() and silently re-activate an event on any edit
+  // that did not mention isActive. The service applies `?? true` on create.
+  isActive: z.boolean().optional(),
 });
 
 export const updateEventSchema = createEventSchema.partial().refine(
@@ -60,8 +63,19 @@ export const updateEventSchema = createEventSchema.partial().refine(
   "Send at least one field to update",
 );
 
+/**
+ * Query strings accept "Music", "music" or "MUSIC" so URLs stay readable
+ * (/events?category=Music&city=Coimbatore&q=night) without weakening the enum.
+ */
+export const categoryQuerySchema = z
+  .string()
+  .trim()
+  .transform((value) => value.toUpperCase())
+  .pipe(categorySchema)
+  .optional();
+
 export const eventListQuerySchema = z.object({
-  category: categorySchema.optional(),
+  category: categoryQuerySchema,
   city: z.string().trim().min(1).max(60).optional(),
   q: z.string().trim().max(120).optional(),
   page: z.coerce.number().int().min(1).default(1),

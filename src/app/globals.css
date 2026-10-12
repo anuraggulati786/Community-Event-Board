@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 228 25% 97%;
+    --foreground: 226 32% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 226 32% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 226 32% 12%;
+
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 226 30% 95%;
+    --secondary-foreground: 226 28% 22%;
+
+    --muted: 226 30% 95%;
+    --muted-foreground: 226 12% 45%;
+
+    --accent: 262 100% 97%;
+    --accent-foreground: 262 60% 38%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 226 20% 90%;
+    --input: 226 20% 88%;
+    --ring: 262 83% 58%;
+
+    --radius: 0.85rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Consistent focus treatment across the app. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+}
+
+@layer utilities {
+  .container-page {
+    @apply container mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+  }
+
+  /* The three "Design your card" backgrounds. */
+  .card-theme-purple-music {
+    background-image: linear-gradient(135deg, #4c1d95 0%, #7c3aed 45%, #c026d3 100%);
+  }
+
+  .card-theme-green-sports {
+    background-image: linear-gradient(135deg, #064e3b 0%, #059669 50%, #84cc16 100%);
+  }
+
+  .card-theme-dark-modern {
+    background-image: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #334155 100%);
+  }
+}
