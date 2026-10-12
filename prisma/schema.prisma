@@ -1,0 +1,105 @@
+// Community Events Board - database schema
+// PostgreSQL + Prisma ORM.
+//
+// Prisma 7 notes:
+//   * the `prisma-client` generator requires an explicit `output`
+//   * the connection URL lives in prisma.config.ts (see project root)
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// The five event categories. Enforced by the database, not just by the UI.
+enum Category {
+  MUSIC
+  WORKSHOP
+  FOOD
+  SPORTS
+  KIDS
+}
+
+/// The three card themes available in the "Design your card" section.
+enum CardTheme {
+  PURPLE_MUSIC
+  GREEN_SPORTS
+  DARK_MODERN
+}
+
+/// A signed-up visitor. Admins are NOT stored here - there is a single
+/// hard-coded admin identity checked against ADMIN_EMAIL / ADMIN_PASSWORD.
+model User {
+  id                 String       @id @default(cuid())
+  email              String       @unique
+  passwordHash       String
+  /// Selected interests, stored as a native Postgres enum array.
+  favoriteCategories Category[]   @default([])
+  createdAt          DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime     @updatedAt @db.Timestamptz(3)
+  reminders          Reminder[]
+  cardDesigns        CardDesign[]
+
+  @@map("users")
+}
+
+/// A published event. Events are never deleted - admins only flip `isActive`.
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  category    Category
+  city        String
+  /// Stored as timestamptz (UTC) and rendered in Asia/Kolkata.
+  eventDate   DateTime @db.Timestamptz(3)
+  /// Whole rupees. Rupee prices are not fractional, so an Int avoids
+  /// float/Decimal rounding and serialises cleanly to JSON.
+  price       Int
+  description String
+  imageUrl    String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+  reminders   Reminder[]
+  cardDesigns CardDesign[]
+
+  /// Drives the visitor listing: WHERE isActive AND eventDate > now() ORDER BY eventDate.
+  @@index([isActive, eventDate])
+  @@index([category])
+  @@index([city])
+  @@map("events")
+}
+
+/// One "Remind me" per user per event.
+model Reminder {
+  id        String   @id @default(cuid())
+  userId    String
+  eventId   String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([userId])
+  @@map("reminders")
+}
+
+/// The saved card design for a user + event pair.
+model CardDesign {
+  id        String    @id @default(cuid())
+  userId    String
+  eventId   String
+  theme     CardTheme @default(PURPLE_MUSIC)
+  /// Sticker emoji, maximum three, order preserved.
+  stickers  String[]  @default([])
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(3)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([userId])
+  @@map("card_designs")
+}
