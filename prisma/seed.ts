@@ -1,7 +1,7 @@
 import "dotenv/config";
-import { PrismaPg } from "@prisma/adapter-pg";
 
-import { PrismaClient, type Category } from "../src/generated/prisma/client";
+import type { Category } from "../src/generated/prisma/client";
+import { createPrismaClient } from "../src/lib/db/connection";
 
 /**
  * Seeds exactly 15 events:
@@ -16,9 +16,9 @@ import { PrismaClient, type Category } from "../src/generated/prisma/client";
  * duplicates.
  */
 
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
-});
+// Uses the same factory as the app, so the UTC session timezone is applied here
+// too - otherwise seeded event times would land 5.5 hours early.
+const prisma = createPrismaClient();
 
 function istDayKey(instant: Date): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(instant);

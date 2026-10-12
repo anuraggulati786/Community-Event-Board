@@ -89,7 +89,11 @@ export function EventsBrowser() {
             <>
               <span className="font-medium text-foreground">{total}</span>{" "}
               {total === 1 ? "event" : "events"}
-              {hasFilters ? " match your filters" : " coming up"}
+              {hasFilters
+                ? total === 1
+                  ? " matches your filters"
+                  : " match your filters"
+                : " coming up"}
             </>
           ) : null}
         </p>

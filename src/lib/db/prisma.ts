@@ -1,27 +1,19 @@
 import "server-only";
 
-import { PrismaPg } from "@prisma/adapter-pg";
+import type { PrismaClient } from "@/generated/prisma/client";
 
-import { PrismaClient } from "@/generated/prisma/client";
+import { createPrismaClient } from "./connection";
 
 /**
  * Single PrismaClient for the whole server process. Next.js hot reloads modules
  * in development, so the instance is cached on globalThis to avoid exhausting
  * database connections.
+ *
+ * Server code only: importing this from a Client Component is a build error.
  */
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
-function createClient() {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    throw new Error(
-      "DATABASE_URL is not set. Copy .env.example to .env and point it at a PostgreSQL database.",
-    );
-  }
-  return new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
-}
-
-export const prisma: PrismaClient = globalForPrisma.prisma ?? createClient();
+export const prisma: PrismaClient = globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;

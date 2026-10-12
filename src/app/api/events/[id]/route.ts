@@ -8,8 +8,9 @@ export const dynamic = "force-dynamic";
 /**
  * GET /api/events/[id]
  *
- * Inactive events are hidden from visitors (404) but stay visible to a signed-in
- * admin so the same endpoint can pre-fill the admin edit form.
+ * Visitors only reach events that the listing would show them - active and
+ * upcoming. Anything else is a 404 for them, but stays available to a signed-in
+ * admin, which is what the admin edit form relies on.
  */
 export const GET = route<{ id: string }>(async (_request, context) => {
   const { id } = await context.params;
@@ -17,7 +18,8 @@ export const GET = route<{ id: string }>(async (_request, context) => {
   const event = await findEventById(id);
   if (!event) throw ApiError.notFound("We could not find that event");
 
-  if (!event.isActive) {
+  const isUpcoming = new Date(event.eventDate).getTime() > Date.now();
+  if (!event.isActive || !isUpcoming) {
     const admin = await getAdminSession();
     if (!admin) throw ApiError.notFound("We could not find that event");
   }
