@@ -42,13 +42,14 @@ function toParts(date: Date) {
   ) as Record<string, string>;
 }
 
-/** "Sat, 18 Oct, 6:30 PM" */
+/** "Sat, 18 Oct, 6:30 PM" - 12-hour clock with no leading zero on the hour. */
 export function formatEventDate(value: string | Date): string {
   const date = typeof value === "string" ? new Date(value) : value;
   if (Number.isNaN(date.getTime())) return "Date to be announced";
   const parts = toParts(date);
   const period = (parts.dayPeriod ?? "").toUpperCase();
-  return `${parts.weekday}, ${parts.day} ${parts.month}, ${parts.hour}:${parts.minute} ${period}`;
+  const hour = parts.hour.replace(/^0/, "");
+  return `${parts.weekday}, ${parts.day} ${parts.month}, ${hour}:${parts.minute} ${period}`;
 }
 
 /** "Sat, 18 Oct 2026" - used inside the card designer preview. */
