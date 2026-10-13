@@ -1,6 +1,7 @@
 import "server-only";
 
 import { ApiError } from "@/lib/api/errors";
+import { isStaleSessionError, staleSessionError } from "@/lib/db/errors";
 import { prisma } from "@/lib/db/prisma";
 import { type ReminderDTO, toReminderDTO } from "@/lib/dto";
 
@@ -75,11 +76,17 @@ export async function addReminder(
     return { reminder: toReminderDTO(reminder), created: false };
   }
 
-  const reminder = await prisma.reminder.create({
-    data: { userId, eventId },
-    ...upcomingEventSelect,
-  });
-  return { reminder: toReminderDTO(reminder), created: true };
+  try {
+    const reminder = await prisma.reminder.create({
+      data: { userId, eventId },
+      ...upcomingEventSelect,
+    });
+    return { reminder: toReminderDTO(reminder), created: true };
+  } catch (error) {
+    // The account was deleted while the token was still valid.
+    if (isStaleSessionError(error)) throw staleSessionError();
+    throw error;
+  }
 }
 
 export async function removeReminder(userId: string, eventId: string): Promise<boolean> {

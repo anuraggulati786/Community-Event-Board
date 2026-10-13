@@ -2,6 +2,7 @@ import "server-only";
 
 import { ApiError } from "@/lib/api/errors";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
+import { isStaleSessionError, staleSessionError } from "@/lib/db/errors";
 import { prisma } from "@/lib/db/prisma";
 import { type UserDTO, toUserDTO } from "@/lib/dto";
 
@@ -52,10 +53,16 @@ export async function updateFavoriteCategories(
   userId: string,
   categories: UserDTO["favoriteCategories"],
 ): Promise<UserDTO> {
-  const user = await prisma.user.update({
-    where: { id: userId },
-    data: { favoriteCategories: { set: categories } },
-    select: { id: true, email: true, favoriteCategories: true, createdAt: true },
-  });
-  return toUserDTO(user);
+  try {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { favoriteCategories: { set: categories } },
+      select: { id: true, email: true, favoriteCategories: true, createdAt: true },
+    });
+    return toUserDTO(user);
+  } catch (error) {
+    // The account was deleted while the token was still valid.
+    if (isStaleSessionError(error)) throw staleSessionError();
+    throw error;
+  }
 }

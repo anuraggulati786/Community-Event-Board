@@ -1,6 +1,7 @@
 import "server-only";
 
 import { ApiError } from "@/lib/api/errors";
+import { isStaleSessionError, staleSessionError } from "@/lib/db/errors";
 import { prisma } from "@/lib/db/prisma";
 import { type CardDesignDTO, toCardDesignDTO } from "@/lib/dto";
 import type { CardTheme } from "@/generated/prisma/enums";
@@ -35,12 +36,17 @@ export async function saveCardDesign(
   const event = await prisma.event.findUnique({ where: { id: eventId }, select: { id: true } });
   if (!event) throw ApiError.notFound("That event no longer exists");
 
-  const design = await prisma.cardDesign.upsert({
-    where: { userId_eventId: { userId, eventId } },
-    create: { userId, eventId, theme, stickers },
-    update: { theme, stickers },
-    select: { eventId: true, theme: true, stickers: true, updatedAt: true },
-  });
-
-  return toCardDesignDTO(design);
+  try {
+    const design = await prisma.cardDesign.upsert({
+      where: { userId_eventId: { userId, eventId } },
+      create: { userId, eventId, theme, stickers },
+      update: { theme, stickers },
+      select: { eventId: true, theme: true, stickers: true, updatedAt: true },
+    });
+    return toCardDesignDTO(design);
+  } catch (error) {
+    // The account was deleted while the token was still valid.
+    if (isStaleSessionError(error)) throw staleSessionError();
+    throw error;
+  }
 }
