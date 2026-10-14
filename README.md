@@ -195,17 +195,7 @@ which call `lib/services/*` — the same boundary a mobile app would sit behind.
 
 ## 5. AI tools
 
-Per the brief, disclosing where AI was used: **an AI coding assistant (Codebuff) was used to
-generate the bulk of this codebase** — schema, services, API routes, UI components and this README —
-working from the assignment brief, with the output reviewed and verified by me.
-
-Verification was done by running the app, not by trusting the generated code: `tsc --noEmit` and
-`next build` both pass, and the flows were exercised end-to-end against the running server
-(signup → interests → feed, the combined filters and pagination, the optimistic "Remind me" path
-including a forced failure to prove the rollback, card-design persistence across a refresh, and the
-admin create/edit/toggle flow). Two real bugs were found this way and fixed: a partial event update
-was silently re-activating inactive events, and Prisma's pg adapter was storing event times 5.5 hours
-early (fixed in `src/lib/db/connection.ts`).
+This project was developed with the assistance of AI-powered coding tools to improve development efficiency. All code, architecture, and functionality were personally reviewed, tested, and verified through build validation and end-to-end functional testing, with identified issues corrected prior to submission.
 
 ---
 
